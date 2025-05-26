@@ -66,7 +66,7 @@ export default function Home() {
     []
   );
 
-  const { send, connected } = useWebSocket("ws://localhost:8080", onEvent);
+  const { send, connected } = useWebSocket(process.env.NEXT_PUBLIC_SOCKET_URL, onEvent);
 
   // Identify on connect, only when uuid is ready
   useEffect(() => {

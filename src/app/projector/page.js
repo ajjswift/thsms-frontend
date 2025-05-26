@@ -27,7 +27,7 @@ export default function Projector() {
   }, []);
 
   const { send, connected } = useWebSocket(
-    "ws://localhost:8080",
+    process.env.NEXT_PUBLIC_SOCKET_URL,
     onEvent
   );
 

@@ -35,7 +35,7 @@ export default function AdminPage() {
 
   // WebSocket connection and event handling
   const { send, connected } = useWebSocket(
-    "ws://localhost:8080",
+    process.env.NEXT_PUBLIC_SOCKET_URL,
     (event, data) => {
       if (event === "welcome") {
         setCurrentRound(data.currentRound);

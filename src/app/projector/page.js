@@ -8,6 +8,8 @@ export default function Projector() {
   const [voteCounts, setVoteCounts] = useState({});
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [intermission, setIntermission] = useState(false);
+const [takeItOff, setTakeItOff] = useState(false);
 
   // WebSocket connection and event handling
   const onEvent = useCallback((event, data) => {
@@ -15,6 +17,8 @@ export default function Projector() {
       setContestants(data.contestants);
       setCurrentRound(data.currentRound);
       setLoading(false);
+      setIntermission(data.intermission || false);
+      setTakeItOff(data.takeItOff || false)
       send("get_vote_counts");
     }
     if (event === "vote_update") {
@@ -23,6 +27,10 @@ export default function Projector() {
     if (event === "round_update") {
       setCurrentRound(data.currentRound);
       send("get_vote_counts");
+    }
+    if (event === "state_update") {
+      setIntermission(data.intermission);
+      setTakeItOff(data.takeItOff);
     }
   }, []);
 
@@ -58,6 +66,31 @@ export default function Projector() {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading results...</p>
+        </div>
+      </div>
+    );
+  }
+
+
+  if (takeItOff) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-100">
+        <div className="text-center">
+          <h1 className="text-6xl font-extrabold text-red-700 mb-4 animate-bounce">
+            Take it off!
+          </h1>
+          <p className="text-2xl text-red-700">The moment of truth is here...</p>
+        </div>
+      </div>
+    );
+  }
+  
+  if (intermission) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-yellow-100">
+        <div className="text-center">
+          <h1 className="text-5xl font-bold text-yellow-700 mb-4">Intermission</h1>
+          <p className="text-xl text-yellow-700">Please wait, voting will resume soon.</p>
         </div>
       </div>
     );

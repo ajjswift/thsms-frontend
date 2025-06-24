@@ -30,6 +30,9 @@ export default function Home() {
   const [myVote, setMyVote] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [intermission, setIntermission] = useState(false);
+  const [waiting, setWaiting] = useState(false);
+  const [takeItOff, setTakeItOff] = useState(false);
 
   // WebSocket connection and event handling
   const onEvent = useCallback(
@@ -37,6 +40,9 @@ export default function Home() {
       if (event === "welcome") {
         setContestants(data.contestants);
         setCurrentRound(data.currentRound);
+        setIntermission(data.intermission || false);
+        setWaiting(data.waitingForNextRound || false);
+        setTakeItOff(data.takeItOff || false);
         setLoading(false);
         send("get_my_vote", {});
         send("get_vote_counts", {});
@@ -48,6 +54,11 @@ export default function Home() {
         setMyVote(data.contestantId);
         setError("");
       }
+      if (event === "state_update") {
+        setIntermission(data.intermission);
+        setWaiting(data.waitingForNextRound);
+        setTakeItOff(data.takeItOff);
+      }
       if (event === "vote_error" || event === "error") {
         setError(data.message);
       }
@@ -57,6 +68,14 @@ export default function Home() {
         setError("");
         send("get_vote_counts", {});
         send("get_my_vote", {});
+      }
+      if (event === "reset_all") {
+        setCurrentRound(data.currentRound || 0);
+        setIntermission(data.intermission || false);
+        setWaiting(data.waitingForNextRound || false);
+        setTakeItOff(data.takeItOff || false);
+        setVoteCounts({});
+        setMyVote && setMyVote(null); // Only on voting page
       }
       if (event === "my_vote") {
         setMyVote(data.contestantId);
@@ -93,6 +112,39 @@ export default function Home() {
         <div className="text-center">
           <div className="w-8 h-8 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
           <p className="text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (takeItOff) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-red-100">
+        <div className="text-center">
+          <h1 className="text-5xl font-extrabold text-red-700 mb-4 animate-bounce">
+            Take it off!
+          </h1>
+          <p className="text-lg text-red-700">The moment of truth is here...</p>
+        </div>
+      </div>
+    );
+  }
+  if (intermission) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-yellow-100">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-yellow-700 mb-4">Intermission</h1>
+          <p className="text-lg text-yellow-700">Please wait, voting will resume soon.</p>
+        </div>
+      </div>
+    );
+  }
+  if (waiting) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-blue-100">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-blue-700 mb-4">Waiting for Next Round</h1>
+          <p className="text-lg text-blue-700">Please wait for the next round to begin.</p>
         </div>
       </div>
     );

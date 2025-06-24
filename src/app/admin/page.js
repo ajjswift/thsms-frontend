@@ -13,6 +13,9 @@ export default function AdminPage() {
   const [currentRound, setCurrentRound] = useState(0);
   const [loading, setLoading] = useState(true);
   const wsAuthed = useRef(false);
+  const [intermission, setIntermission] = useState(false);
+const [waiting, setWaiting] = useState(false);
+const [takeItOff, setTakeItOff] = useState(false);
 
   // On mount, get or set UUID in cookie
   useEffect(() => {
@@ -33,6 +36,15 @@ export default function AdminPage() {
     }
   }, []);
 
+  const toggleIntermission = () => send("toggle_intermission");
+  const toggleWaiting = () => send("toggle_waiting");
+  const toggleTakeItOff = () => send("toggle_take_it_off");
+  const clearAll = () => {
+    if (window.confirm("Are you sure you want to clear all scores and reset everything?")) {
+      send("clear_all");
+    }
+  };
+
   // WebSocket connection and event handling
   const { send, connected } = useWebSocket(
     process.env.NEXT_PUBLIC_SOCKET_URL,
@@ -40,11 +52,19 @@ export default function AdminPage() {
       if (event === "welcome") {
         setCurrentRound(data.currentRound);
         setLoading(false);
+        setIntermission(data.intermission || false);
+        setWaiting(data.waitingForNextRound || false);
+        setTakeItOff(data.takeItOff || false);
         if (!data.isAdmin) {
           setAuth(false);
           setPwError("JWT expired or invalid. Please log in again.");
           Cookies.remove("admin_jwt");
         }
+      }
+      if (event === "state_update") {
+        setIntermission(data.intermission);
+        setWaiting(data.waitingForNextRound);
+        setTakeItOff(data.takeItOff);
       }
       if (event === "round_update") {
         setCurrentRound(data.currentRound);
@@ -95,6 +115,9 @@ export default function AdminPage() {
   // Admin action via WebSocket
   const nextRound = () => {
     send("next_round");
+    waiting && toggleWaiting()
+    intermission && toggleIntermission()
+    takeItOff && toggleTakeItOff()
   };
 
   if (!auth) {
@@ -105,7 +128,7 @@ export default function AdminPage() {
           onSubmit={handlePwSubmit}
         >
           <h1 className="text-2xl font-bold mb-6 text-center text-blue-700">
-            Admin Login
+            Admin
           </h1>
           <input
             type="password"
@@ -153,6 +176,45 @@ export default function AdminPage() {
             >
               Next Round
             </button>
+            <button
+              className={`w-full px-6 py-3 rounded-lg font-semibold text-lg shadow transition mb-4 ${
+                intermission
+                  ? "bg-yellow-600 text-white hover:bg-yellow-700"
+                  : "bg-yellow-100 text-yellow-800 hover:bg-yellow-200"
+              }`}
+              onClick={toggleIntermission}
+            >
+              {intermission ? "End Intermission" : "Start Intermission"}
+            </button>
+            <button
+              className={`w-full px-6 py-3 rounded-lg font-semibold text-lg shadow transition mb-4 ${
+                waiting
+                  ? "bg-blue-600 text-white hover:bg-blue-700"
+                  : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+              }`}
+              onClick={toggleWaiting}
+            >
+              {waiting ? "End Waiting" : "Start Waiting for Next Round"}
+            </button>
+
+            <button
+              className={`w-full px-6 py-3 rounded-lg font-semibold text-lg shadow transition mb-4 ${
+                takeItOff
+                  ? "bg-red-600 text-white hover:bg-red-700"
+                  : "bg-red-100 text-red-800 hover:bg-red-200"
+              }`}
+              onClick={toggleTakeItOff}
+            >
+              {takeItOff ? "End 'Take it off!'" : "Show 'Take it off!'"}
+            </button>
+
+            <button
+              className="w-full px-6 py-6 bg-red-600 text-white rounded-lg font-semibold text-lg shadow transition hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-400 mt-4"
+              onClick={clearAll}
+            >
+              Clear Scores & Reset All
+            </button>
+            
           </>
         )}
       </div>
